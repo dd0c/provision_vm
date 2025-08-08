@@ -1,0 +1,52 @@
+---
+
+- name: Set hostname to HostnameVar dot DomainnameVar
+  ansible.builtin.hostname:
+    name: "{{ HostnameVar }}.{{ DomainnameVar }}"
+    use: systemd
+  #- name: Change IP address
+  #  community.general.nmcli:
+  #  conn_name: "{{ ansible_default_ipv4.alias }}"
+  #  ifname: "{{ ansible_default_ipv4.alias }}"
+  #  type: ethernet
+  #  ip4: "{{ HostnameVar }}_{{"
+  #  gw4: "{{ AkuadoraInternalGW4 }}"
+  #  state: present
+- name: Comment out %wheel to run all commands in /etc/sudoers
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    regexp: '^%wheel  ALL=(ALL)       ALL'
+    line: '# %wheel  ALL=(ALL)       ALL'
+- name: Comment in %wheel to run all commands in /etc/sudoers without password
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    regexp: '^# %wheel        ALL=(ALL)       NOPASSWD: ALL'
+    line: '%wheel        ALL=(ALL)       NOPASSWD: ALL'
+- name: Create ssh keypair for default user
+  ansible.builtin.user:
+    name: tycho
+    shell: /bin/bash
+    groups: wheel
+    append: yes
+    generate_ssh_key: yes
+    ssh_key_bits: 4096
+    ssh_key_file: .ssh/id_rsa
+- name: Create standard authorized_keys file for default user
+  ansible.builtin.copy:
+    src: files/homes/.ssh/authorized_keys
+    dest: /home/tycho/.ssh/authorized_keys
+    owner: tycho
+    group: tycho
+    mode: '0640'
+      # - name: Change default password of default user
+      #   ansible.builtin.user:
+      #     name: tycho
+      #     password: "ENC_{{ HostnameVar }}_tycho"
+- name: Unconditionally reboot the machine with slight delay
+  ansible.builtin.reboot:
+    reboot_timeout: 30
+    msg: "Rebooting machine in 30 seconds"
+- name: Wait 600 seconds for target connection to become reachable/usable
+  ansible.builtin.wait_for_connection:
+
+...      
