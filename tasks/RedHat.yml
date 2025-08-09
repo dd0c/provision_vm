@@ -22,26 +22,26 @@
     path: /etc/sudoers
     regexp: '^# %wheel        ALL=(ALL)       NOPASSWD: ALL'
     line: '%wheel        ALL=(ALL)       NOPASSWD: ALL'
-- name: Create ssh keypair for default user
+- name: Create ssh keypair for default Ansible user
   ansible.builtin.user:
-    name: tycho
+    name: "{{ AnsibleUser }}"
     shell: /bin/bash
     groups: wheel
     append: yes
     generate_ssh_key: yes
     ssh_key_bits: 4096
     ssh_key_file: .ssh/id_rsa
-- name: Create standard authorized_keys file for default user
+- name: Create standard authorized_keys file for default Ansible user
   ansible.builtin.copy:
-    src: files/homes/.ssh/authorized_keys
-    dest: /home/tycho/.ssh/authorized_keys
-    owner: tycho
-    group: tycho
+    src: files/homedir/.ssh/authorized_keys
+    dest: /home/"{{ AnsibleUser }}"/.ssh/authorized_keys
+    owner: "{{ AnsibleUser }}"
+    group: "{{ AnsibleUser }}"
     mode: '0640'
-      # - name: Change default password of default user
-      #   ansible.builtin.user:
-      #     name: tycho
-      #     password: "ENC_{{ HostnameVar }}_tycho"
+- name: Change default password of default Ansible user
+  ansible.builtin.user:
+    name: "{{ AnsibleUser }}"
+    password: "ENC_{{ HostnameVar }}_{{ AnsibleUser }}"
 - name: Unconditionally reboot the machine with slight delay
   ansible.builtin.reboot:
     reboot_timeout: 30
